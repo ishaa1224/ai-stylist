@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stylist: Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251107_5" >
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container results-container">
+        
+        <header>
+            <h1><span class="sparkle">✨</span> AI Stylist</h1>
+            <p>Style Recommendations for {{ user_name }}</p>
+            <a href="{{ url_for('index') }}" class="new-search-button">
+                Start New Style Analysis
+            </a>
+        </header>
+
+        <div class="detected-info">
+            <p>Detected Body Shape: <span class="highlight">{{ detected_shape }}</span></p>
+            <p>Selected Event: <span class="highlight">{{ selected_event }}</span></p>
+            <p>Email: <span class="highlight">{{ user_email }}</span></p>
+        </div>
+
+        <div class="color-palette-section">
+            <h3>Your Recommended Color Palette ({{ color_palette.season }} Tones)</h3>
+            <p>{{ color_palette.description }}</p>
+            <div class="palette-colors">
+                {% for color_code in color_palette.colors %}
+                    <div class="color-swatch" style="background-color: {{ color_code }};" title="{{ color_code }}"></div>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        {% set best_match = vto_options[0] %}
+        <div class="best-match-section">
+            <h3>👗 Our Top Recommendation for You</h3>
+            
+            <div class="best-match-content">
+                <div class="best-match-image-container">
+                    <img src="{{ best_match.final_vto_url }}" alt="Best Match VTO" class="final-vto-image">
+                </div>
+
+                <div class="best-match-details">
+                    <h4>{{ best_match.name }}</h4>
+                    <p class="tip-text"><strong>Stylist Tip:</strong> {{ best_match.tip }}</p>
+                    
+                    <div class="sustainable-material-note">
+                        <p><strong>Sustainable Fabric:</strong> 
+                            <span class="highlight-eco">{{ best_match.sustainable_material }}</span>
+                        </p>
+                    </div>
+
+                    <a href="{{ best_match.vto_url }}" target="_blank" class="vto-button">
+                        View Product Details (External Link)
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        
+        <h2 class="gallery-header">More Curated Options for {{ selected_event }}</h2>
+
+        <div class="vto-gallery">
+            
+            {% for option in vto_options[1:] %}
+                <div class="vto-gallery-item">
+                    <div class="vto-image-container">
+                        <img src="{{ option.final_vto_url }}" alt="VTO Option {{ loop.index }}" class="final-vto-image">
+                    </div>
+                    
+                    <div class="vto-gallery-details" style="padding: 15px;">
+                        <h4>{{ option.name }}</h4>
+                        <p class="tip-text" style="font-size: 0.9em;"><strong>Tip:</strong> {{ option.tip }}</p>
+                        
+                        <a href="{{ option.vto_url }}" target="_blank" class="vto-button">
+                            View Product
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+
+        </div>
+        
+    </div>
+</body>
+</html>

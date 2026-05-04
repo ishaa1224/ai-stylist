@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stylist – Upload</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container upload-box">
+
+        <h1 class="page-title">Upload Your Photo</h1>
+
+        <!-- IMPORTANT: Correct route + correct enctype -->
+        <form method="POST" action="{{ url_for('recommend') }}" enctype="multipart/form-data">
+
+            <!-- MAIN Upload Section (backend REQUIRED field) -->
+            <label class="section-label">Select Your Image</label>
+            <input 
+                type="file" 
+                name="user_photo" 
+                accept="image/*" 
+                class="file-input" 
+                required
+            >
+
+            <br><br>
+
+            <!-- Event Section (backend REQUIRED field) -->
+            <label class="section-label">Select Event</label>
+            <select name="event_type" required>
+                <option disabled selected>-- Choose an Event --</option>
+                {% for event in events %}
+                    <option value="{{ event }}">{{ event }}</option>
+                {% endfor %}
+            </select>
+
+            <br><br>
+
+            <!-- VTO Optional Section (NOT sent to backend) -->
+            <div class="vto-section">
+                <h2 class="vto-title">Virtual Try-On (Optional)</h2>
+
+                <label class="section-label">Choose Option</label>
+
+                <!-- Upload VTO Photo (Optional, NOT submitted to backend) -->
+                <button 
+                    type="button" 
+                    class="vto-btn" 
+                    onclick="document.getElementById('vtoUpload').click()"
+                >
+                    Upload VTO Picture
+                </button>
+
+                <!-- Removed name="vto_image" to avoid backend error -->
+                <input 
+                    id="vtoUpload" 
+                    type="file" 
+                    style="display:none" 
+                    accept="image/*"
+                >
+
+                <!-- Camera -->
+                <button type="button" class="vto-btn" onclick="openCamera()">
+                    Open Camera
+                </button>
+
+                <video 
+                    id="cameraView" 
+                    width="300" 
+                    autoplay 
+                    style="display:none; margin-top:15px; border-radius:10px;">
+                </video>
+
+            </div>
+
+            <br>
+            <button type="submit" class="submit-button large-submit-button">
+                Submit
+            </button>
+
+        </form>
+
+    </div>
+
+<script>
+function openCamera() {
+    const cam = document.getElementById("cameraView");
+    cam.style.display = "block";
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => cam.srcObject = stream)
+    .catch(err => alert("Camera not accessible"));
+}
+</script>
+
+</body>
+</html>

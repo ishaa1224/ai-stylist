@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stylist – Login</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body class="login-page">
+
+    <div class="container small-login-box">
+
+        <header>
+            <h1><span class="sparkle">✨</span> AI Stylist</h1>
+            <p>Welcome back! Login to continue.</p>
+        </header>
+
+        <!-- LOGIN FORM -->
+        <form method="POST" action="{{ url_for('upload_photo') }}">
+
+
+            <label class="section-label">Email</label>
+            <input type="email" name="email" placeholder="Enter email" class="file-input" required>
+
+            <label class="section-label">Password</label>
+            <input type="password" name="password" placeholder="Enter password" class="file-input" required>
+
+            <button type="submit" class="submit-button login-button">
+                Login
+            </button>
+
+        </form>
+
+    </div>
+
+</body>
+</html>
