@@ -1,0 +1,45 @@
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">
+            <span class="sparkle">✨</span> AI Stylist
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-item">Home</a>
+            <a href="{{ url_for('collection') }}" class="nav-item">Collection</a>
+            <a href="#" class="nav-item">Articles</a>
+            <a href="#" class="nav-item nav-cart">
+                <span class="cart-icon">🛒</span> Cart
+                <span class="cart-badge">0</span>
+            </a>
+        </div>
+        <div class="nav-actions">
+            <a href="{{ url_for('index') }}" class="nav-btn btn-login">Login</a>
+            <a href="#" class="nav-btn btn-signup">Signup</a>
+        </div>
+        <div class="nav-mobile-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+</nav>
+
+<!-- Global Cart Modal -->
+<div id="globalCartModal" class="cart-modal-overlay">
+    <div class="cart-modal">
+        <div class="cart-modal-header">
+            <h2>Your Shopping Bag</h2>
+            <button id="closeGlobalCart" class="close-cart">&times;</button>
+        </div>
+        <div id="cartItemsList" class="cart-items-list">
+            <!-- Items will be injected here -->
+        </div>
+        <div class="cart-total-section">
+            <span>Total:</span>
+            <span id="cartTotalValue">INR 0</span>
+        </div>
+        <button class="checkout-btn">Proceed to Checkout</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='cart.js') }}"></script>

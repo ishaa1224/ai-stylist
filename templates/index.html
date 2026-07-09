@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    {% include 'navbar.html' %}
     <div class="container results-container">
         
         <header>
@@ -54,8 +55,12 @@
                         </p>
                     </div>
 
-                    <a href="{{ best_match.vto_url }}" target="_blank" class="vto-button">
-                        View Product Details (External Link)
+                    {% set details_url = url_for('product_details', name=best_match.name, tip=best_match.tip, material=best_match.sustainable_material, img_url=best_match.final_vto_url) %}
+                    <a href="{{ details_url }}" target="_blank" class="vto-button" style="margin-bottom: 10px;">
+                        View Product Details
+                    </a>
+                    <a href="#" class="vto-button" style="background: linear-gradient(135deg, #F4D03F, #D4AF37); color: #000;" onclick="addToCartGlobal('{{ best_match.name }}', '{{ best_match.price }}', '{{ best_match.final_vto_url }}', '{{ details_url }}'); return false;">
+                        Add to Bag ({{ best_match.price }})
                     </a>
                 </div>
             </div>
@@ -76,9 +81,15 @@
                         <h4>{{ option.name }}</h4>
                         <p class="tip-text" style="font-size: 0.9em;"><strong>Tip:</strong> {{ option.tip }}</p>
                         
-                        <a href="{{ option.vto_url }}" target="_blank" class="vto-button">
-                            View Product
-                        </a>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            {% set opt_details_url = url_for('product_details', name=option.name, tip=option.tip, material=option.sustainable_material, img_url=option.final_vto_url) %}
+                            <a href="{{ opt_details_url }}" target="_blank" class="vto-button" style="font-size: 0.85em;">
+                                View Details
+                            </a>
+                            <a href="#" class="vto-button" style="background: linear-gradient(135deg, #F4D03F, #D4AF37); color: #000; font-size: 0.85em;" onclick="addToCartGlobal('{{ option.name }}', '{{ option.price }}', '{{ option.final_vto_url }}', '{{ opt_details_url }}'); return false;">
+                                Add to Bag
+                            </a>
+                        </div>
                     </div>
                 </div>
             {% endfor %}

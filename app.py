@@ -1,12 +1,30 @@
 from flask import Flask, render_template, request, url_for, redirect
+from flask_sqlalchemy import SQLAlchemy
 from PIL import Image
 import os 
 import random
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
+database_url = os.getenv('DATABASE_URL', 'sqlite:///ai_stylist.db')
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
+
+
+class CollectionItem(db.Model):
+    __tablename__ = 'collection_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    price = db.Column(db.String(50), nullable=False)
+    material = db.Column(db.String(255), nullable=False)
+    story = db.Column(db.Text, nullable=False)
+    img_url = db.Column(db.Text, nullable=False)
 
 # --- 1. CORE AI SIMULATION: BODY SHAPE DETECTION (FORCED HOURGLASS) ---
 def simulate_body_shape_detection(image_path):
@@ -89,7 +107,7 @@ RECOMMENDATIONS = {
     ],
     
     # --- HOURGLASS SHAPE OUTFITS (COCKTAIL PARTY) ---
-    ('Hourglass', 'Cocktail Party'): [ 
+    ('Hourglass', 'Cocktail Party Classic'): [ 
         {
             'name': 'Black Spaghetti-Strap Quilted Midi',
             'tip': 'The fitted bodice and full midi skirt naturally complement your waist-to-hip curve. A timeless look.',
@@ -305,7 +323,7 @@ RECOMMENDATIONS = {
             'tip': 'Asymmetric cuts highlight the shoulders beautifully.',
             'sustainable_material': 'Ecovero viscose.',
             'vto_url': 'https://vto.example.com/hg_cocktail_2',
-            'overlay_img_url': 'overlays/hg_cocktail_2.png', 
+            'overlay_img_url': 'overlays/hg_cocktail_6.png', 
         },
          {
 
@@ -329,7 +347,7 @@ RECOMMENDATIONS = {
             'tip': 'Dark colors slim the torso while textured fabric adds interest.',
             'sustainable_material': 'Recycled polyester.',
             'vto_url': 'https://vto.example.com/hg_cocktail_5',
-            'overlay_img_url': 'overlays/hg_cocktail_5.png', 
+                'overlay_img_url': 'overlays/hg_cocktail_7.png', 
         },
          {
 
@@ -487,6 +505,12 @@ def recommend():
             vto_output_url = apply_virtual_try_on(filepath, outfit['overlay_img_url'])
             vto_option = outfit.copy()
             vto_option['final_vto_url'] = vto_output_url 
+            
+            # Generate a consistent price for this outfit name
+            random.seed(outfit['name'])
+            price_value = random.randint(7499, 22999)
+            vto_option['price'] = f"INR {price_value:,}"
+            
             final_vto_options.append(vto_option)
 
         # 6. Render the results (index.html is the results page)
@@ -503,6 +527,121 @@ def recommend():
                                color_palette=color_palette,
                                user_name=user_name,
                                user_email=user_email)
+
+@app.route('/product')
+def product_details():
+    name = request.args.get('name', 'Elegant Outfit')
+    tip = request.args.get('tip', '')
+    material = request.args.get('material', 'Sustainable Fabric')
+    img_url = request.args.get('img_url', '')
+    
+    # Generate dynamic price and beautiful description
+    random.seed(name) # Consistent price for the same product name
+    price_value = random.randint(7499, 22999)
+    price = f"INR {price_value:,}"
+    
+    description = (f"Elevate your wardrobe with this exquisite piece. "
+                   f"Thoughtfully designed to offer a flawless fit, this {name.lower()} "
+                   f"combines modern aesthetics with timeless elegance. Crafted using premium {material}, "
+                   f"it ensures both comfort and sustainability. Perfect for making a lasting impression.")
+                   
+    return render_template('product.html', name=name, tip=tip, material=material, img_url=img_url, price=price, description=description)
+
+@app.route('/collection')
+def collection():
+    try:
+        db_items = CollectionItem.query.order_by(CollectionItem.id.asc()).all()
+        if db_items:
+            collection_items = [
+                {
+                    'id': item.id,
+                    'name': item.name,
+                    'price': item.price,
+                    'material': item.material,
+                    'story': item.story,
+                    'img_url': item.img_url,
+                }
+                for item in db_items
+            ]
+            return render_template('collection.html', items=collection_items)
+    except Exception as error:
+        print(f"Collection database lookup failed, using fallback data: {error}")
+
+    collection_items = [
+        {
+            'id': 1,
+            'name': 'The Solar Flare Gown',
+            'price': 'INR 18,999',
+            'material': 'Liquid Silk & Gold Thread',
+            'story': 'Inspired by the celestial dance of the sun, this gown captures the essence of the golden hour. Every thread is woven with the promise of a new dawn, designed for the woman who shines from within.',
+            'img_url': 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 2,
+            'name': 'Midnight Nebula Suit',
+            'price': 'INR 24,499',
+            'material': 'Stellar Velvet & Obsidian Satin',
+            'story': 'A tribute to the infinite mystery of the cosmos. The Midnight Nebula Suit is more than attire; it is an aura. Crafted for those who find power in the shadows and light in the unknown.',
+            'img_url': 'https://images.unsplash.com/photo-1594932224828-b4b059b6f6f9?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 3,
+            'name': 'Arctic Whisper Coat',
+            'price': 'INR 15,799',
+            'material': 'Glacier Wool & Recycled Cashmere',
+            'story': 'Born from the hushed beauty of a winter morning. This coat offers the warmth of a fire on a frozen night, blending structural elegance with the soft touch of falling snow.',
+            'img_url': 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 4,
+            'name': 'Emerald Eden Wrap',
+            'price': 'INR 12,299',
+            'material': 'Organic Bamboo Silk',
+            'story': 'A love letter to the ancient forests. The Emerald Eden Wrap drapes you in the vibrant life of a tropical canopy, ensuring every step you take is in harmony with nature.',
+            'img_url': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 5,
+            'name': 'Sapphire Serenity Kaftan',
+            'price': 'INR 14,499',
+            'material': 'Lustrous Silk Georgette',
+            'story': 'A piece that mirrors the depths of the ocean. This kaftan is designed for moments of absolute peace, where elegance meets effortless grace.',
+            'img_url': 'https://images.unsplash.com/photo-1490481651871-ab68625d5e21?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 6,
+            'name': 'Ivory Illusion Blouse',
+            'price': 'INR 9,899',
+            'material': 'Sheer Crepe de Chine',
+            'story': 'A delicate play of light and shadow. The Ivory Illusion Blouse brings a touch of ethereal beauty to the modern wardrobe, perfect for transitions from day to night.',
+            'img_url': 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 7,
+            'name': 'Crimson Cascade Gown',
+            'price': 'INR 21,999',
+            'material': 'Vibrant Ruby Chiffon',
+            'story': 'Bold, passionate, and unforgettable. The Crimson Cascade Gown is a statement of strength and beauty, flowing like a river of fire with every move.',
+            'img_url': 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 8,
+            'name': 'Onyx Power Blazer',
+            'price': 'INR 17,299',
+            'material': 'Structured Virgin Wool',
+            'story': 'Precision meeting power. This blazer is the armor for the modern visionary, offering sharp lines and an impeccable silhouette that commands respect.',
+            'img_url': 'https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+            'id': 9,
+            'name': 'Rose Quartz Jumpsuit',
+            'price': 'INR 13,899',
+            'material': 'Blush Satin Twill',
+            'story': 'Softness defined in a structured form. The Rose Quartz Jumpsuit captures the gentle strength of a morning sky, blending playful charm with sophisticated grace.',
+            'img_url': 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&q=80&w=800'
+        }
+    ]
+    return render_template('collection.html', items=collection_items)
 
 if __name__ == '__main__':
     app.run(debug=True)
