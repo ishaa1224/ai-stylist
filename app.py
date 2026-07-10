@@ -6,7 +6,14 @@ import random
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
-database_url = os.getenv('DATABASE_URL', 'sqlite:///ai_stylist.db')
+
+database_url = os.getenv('DATABASE_URL')
+if not database_url:
+    if os.environ.get('VERCEL'):
+        database_url = 'sqlite:////tmp/ai_stylist.db'
+    else:
+        database_url = 'sqlite:///ai_stylist.db'
+
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
