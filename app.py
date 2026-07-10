@@ -1,11 +1,21 @@
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 from PIL import Image
 import os 
 import random
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads/'
+if os.environ.get('VERCEL'):
+    app.config['UPLOAD_FOLDER'] = '/tmp/'
+else:
+    app.config['UPLOAD_FOLDER'] = 'static/uploads/'
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 database_url = os.getenv('DATABASE_URL')
 if not database_url:
@@ -419,7 +429,7 @@ def apply_virtual_try_on(user_img_path, overlay_filename):
         final_vto_img.convert("RGB").save(vto_filepath, 'JPEG')
         
         # Return the public URL
-        return url_for('static', filename=f"uploads/{vto_filename}")
+        return url_for('uploaded_file', filename=vto_filename)
         
     except Exception as e:
         # 2. ERROR HANDLING: If the merge fails (corrupt or missing overlay/user file)
@@ -434,7 +444,7 @@ def apply_virtual_try_on(user_img_path, overlay_filename):
             
             placeholder.save(vto_filepath, 'JPEG')
             print(f"Saved a gray placeholder to {vto_filepath}")
-            return url_for('static', filename=f"uploads/{vto_filename}")
+            return url_for('uploaded_file', filename=vto_filename)
             
         except Exception as inner_e:
              # If even creating the placeholder fails, just return a dummy path
@@ -443,6 +453,10 @@ def apply_virtual_try_on(user_img_path, overlay_filename):
 
 
 # --- 4. FLASK ROUTES ---
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 @app.route('/', methods=['GET'])
 def index():
     events = [
@@ -484,14 +498,20 @@ def recommend():
 
     if file.filename == '':
         return redirect(url_for('index'))
+        
+    if not allowed_file(file.filename):
+        return "Error: Invalid file type. Please upload a JPG or PNG.", 400
     
     # 2. Save the uploaded file
     if file:
-        filename = f"{random.randint(1000, 9999)}_{file.filename}"
+        safe_filename = secure_filename(file.filename)
+        filename = f"{random.randint(1000, 9999)}_{safe_filename}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
         try:
             img = Image.open(file.stream)
+            if img.format not in ['JPEG', 'PNG']:
+                img = img.convert('RGB')
             img.save(filepath)
         except Exception as e:
             print(f"File error during save: {e}")
